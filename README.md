@@ -1,42 +1,6 @@
 
 
-kubectl run bootcamp --image=docker.io/jocatalin/kubernetes-bootcamp:v1 --port=8080
 
-kubectl apply -f deployment.yml
-
-kubectl get deployments
-
--- con el uso de ingress no es necesario crear un servicio loadbalancer
--- kubectl expose deployment/bootcamp --type="LoadBalancer" --port 8080
-
--- se adjunta servicio e ingress yml para ser ejecutados con kubectl apply -f file.yml
-kubectl get services
-
--- no es necesario esta parte dado que el ingress provee la ip externa
---export EXTERNAL_IP=$(kubectl get service bootcamp --output=jsonpath='{.status.loadBalancer.ingress[0].ip}')
---export PORT=$(kubectl get services --output=jsonpath='{.items[0].spec.ports[0].port}')
--- curl "$EXTERNAL_IP:$PORT"
-
-minikube ip > ip
-
-curl ip
-
-Hello Kubernetes bootcamp! | Running on: bootcamp-390780338-2fhnk | v=1
-
---------------------------------------------- Fin
-kubectl describe service bootcamp
-
-Name: bootcamp
-Namespace: default
-Labels: run=bootcamp
-Selector: run=bootcamp
-Type: LoadBalancer
-IP: 10.3.245.61
-LoadBalancer Ingress: 104.155.111.170
-Port: <unset> 8080/TCP
-NodePort: <unset> 32452/TCP
-Endpoints: 10.0.0.3:8080
-... events and details left out ....
 
 kubectl scale deployments/bootcamp --replicas=4
 
@@ -55,7 +19,12 @@ Un práctico proyecto para entender muy rápidamente kubernetes.
 
 ## Getting Started
 
-Antes de comenzar creando nuestro primer pod con una imagen en nodeJS que desplegara nuestro Hola mundo en kubernetes. Commo muchos en el tema saben es tener corriendo el kubernetes en el namespace default. 
+Antes de comenzar creando nuestro primer pod con una imagen en nodeJS que desplegara nuestro Hola mundo en kubernetes. Como muchos en el tema ya saben, hay que verificar que el minikube este corriendo en el namespace default. 
+
+Para apuntar nuestro minikube al namespace default 
+
+
+
 
 ```
 minikube start
@@ -66,6 +35,13 @@ Ahora si bien, construyamos nuestro pod con una imagen de una aplicacion en nues
 ```
 kubectl run bootcamp --image=docker.io/jocatalin/kubernetes-bootcamp:v1 --port=8080
 ```
+
+Apliquemos nuestro files deployment.yml que contiene las referencia de nuestra imagen y va a ser contenidas en nuestro pod creado anteriormente.
+
+```
+kubectl apply -f deployment.yml
+```
+
 
 Con lo anterior revisamos la lista de despliegues
 
@@ -80,6 +56,92 @@ NAME       READY   UP-TO-DATE   AVAILABLE   AGE
 bootcamp   1/1     1            1           3h23m
 ```
 
+Creamos nuestro servicio que va a contener el deployment previamente cargado
+
+```
+kubectl apply -f servicioBootcamp.yml
+```
+
+Si quieres ver el servicio generado
+
+```
+kubectl get services
+```
+Deberias ver algo asi como lo siguiente:
+
+```
+NAME               TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+bootcamp-service   ClusterIP   10.101.6.222   <none>        8080/TCP   3h27m
+kubernetes         ClusterIP   10.96.0.1      <none>        443/TCP    4h8m
+```
+
+Creamos nuestro ingress que va a asociar la <ip externa> que exponga creada automaticamente y la va a asociar al servicio creado anteriormente. para eso ejecutamos la siguiente instrucción.
+
+```
+kubectl apply -f ingress.yml
+```
+
+Igual que en el caso anterior para ver los <ingress> activos en kubernetes, le damos a la siguiente expresión.
+
+```
+kubectl get ingress
+```
+
+Deberías visualizar lo siguiente, donde podemos ver la ip por la cual ya podemos acceder a nuestra imagen que desplegara Hola mundo.
+
+```
+NAME               CLASS    HOSTS   ADDRESS         PORTS   AGE
+bootcamp-ingress   <none>   *       192.168.64.12   80      3h24m
+```
+
+Testeamos lo anterior apuntando a la ip indicada, y ?
+```
+curl 192.168.64.12
+```
+
+Tenemos la respuesta de nuestra aplicacion, por medio de esta IP Expuesta en el puerto 80. 
+
+```
+Hello Kubernetes bootcamp! | Running on: bootcamp-75669f6c6d-btfw2 | v=1
+```
+  
+## Obtener informacion Detallada de nuestro Bootcamp
+
+```
+kubectl describe service bootcamp
+```
+
+Encontramos el siguiente detalle 
+
+```
+Name: bootcamp
+Namespace: default
+Labels: run=bootcamp
+Selector: run=bootcamp
+Type: LoadBalancer
+IP: 10.3.245.61
+LoadBalancer Ingress: 104.155.111.170
+Port: <unset> 8080/TCP
+NodePort: <unset> 32452/TCP
+Endpoints: 10.0.0.3:8080
+```
+
+## Escalar los Deployment
+
+```
+kubectl scale deployments/bootcamp --replicas=4
+```
+
+## Eliminar nuestro POD, Deployment Servicio, Ingress, 
+
+kubectl delete ingress bootcamp
+
+kubectl delete service bootcamp
+
+kubectl delete deployment bootcamp
+
+kubectl delete pod bootcamp
+
 
 ### Estructura de Archivos
 
@@ -93,47 +155,6 @@ En el siguiente esquema se declara la lista de archivos que contiene este simple
 └── servicioBootcamp.yml
 ```
 
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
@@ -141,29 +162,18 @@ Add additional notes about how to deploy this on a live system
 - [Maven](https://maven.apache.org/) - Dependency Management
 - [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
 
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
 ## Authors
 
-- **Billie Thompson** - _Initial work_ - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+- **Alejandro Sandoval** - _Initial work_ - [Alejandro Sandoval](https://github.com/catchai)
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
+## Para saber más de kubernet
 
-- Hat tip to anyone whose code was used
-- Inspiration
-- etc
+- Visitar el bootcamp de kubernetes [bootcamp](https://kubernetesbootcamp.github.io/kubernetes-bootcamp/index.html)
 
 
 
