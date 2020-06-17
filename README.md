@@ -1,18 +1,3 @@
-
-
-
-
-kubectl scale deployments/bootcamp --replicas=4
-
-kubectl get deployments
-
-kubectl delete deployment bootcamp
-
-kubectl delete service bootcamp
-
-
--------
-
 # KUBERNETES - HOLA MUNDO
 
 Un práctico proyecto para entender muy rápidamente kubernetes. 
