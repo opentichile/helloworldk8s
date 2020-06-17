@@ -46,7 +46,7 @@ kubectl apply -f deployment.yml
 Con lo anterior revisamos la lista de despliegues
 
 ```
-kubectl apply -f deployment.yml
+kubectl get deployment
 ```
 
 Cersiorate de ver algo como esto
